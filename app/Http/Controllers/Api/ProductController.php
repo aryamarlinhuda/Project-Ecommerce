@@ -31,10 +31,6 @@ class ProductController extends Controller
                 $data[$x]->category = null;
             }
 
-            if($item->budget === 0) {
-                $data[$x]->price = "Rp 0";
-            }
-
             $reviews = Review::where('product_id',$item->id)->first();
             if(!$reviews) {
                 $data[$x]->rating = null;
@@ -53,20 +49,28 @@ class ProductController extends Controller
         );
     }
 
-    public function detail($id) {
-        $data = Product::findOrFail($id);
+    public function detail($id) {   
+        $data = Product::find($id);
+        if (!$data) {
+            return response()->json([
+                "status" => 404,
+                "message" => "Product Not Found!"],
+                404
+            );
+        }
 
         $images = Image::where('product_id',$data->id)->get();
         if($images) {
             foreach ($images as $x => $image) {
-                $images[$x]->photo = url('storage/'.$image->image);
+                $images[$x]->photo_url = url('storage/'.$image->image);
             }
+            $data->photo_url = $images;
         } else {
-            $images->photo = null;
+            $data->photo_url = null;
         }
 
         if($data->category_id) {
-            $data->category = $data->category_name->category;
+            $data->category = $data->category->name;
         } else {
             $data->category = null;
         }
@@ -141,12 +145,6 @@ class ProductController extends Controller
                 $data[$x]->category = $item->category->name;
             } else {
                 $data[$x]->category = null;
-            }
-
-            if($item->budget) {
-                $data[$x]->price = 'Rp ' . number_format($item->budget, 2, ',', '.');
-            } else {
-                $data[$x]->price = "Rp 0";
             }
 
             $reviews = Review::where('product_id',$item->id)->first();

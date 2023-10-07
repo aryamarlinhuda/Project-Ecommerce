@@ -12,7 +12,7 @@ class Cart extends Model
     protected $table = 'table_cart';
     Protected $primaryKey = 'id';
     protected $fillable = ['product_id','quantity','carted_by'];
-    protected $hidden = ['product_id','carted_by','product','user'];
+    protected $hidden = ['product_id','carted_by','user'];
 
     public function product() {
         return $this->belongsTo('App\Models\Product', 'product_id');

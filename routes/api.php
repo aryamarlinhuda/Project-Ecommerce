@@ -52,8 +52,8 @@ Route::group(['middleware' => 'auth:api'], function() {
         Route::prefix('cart')->group(function() {
             Route::get('list','list');
             Route::post('add','add');
-            Route::post('add','add');
-            Route::get('remove','remove');
+            Route::post('edit','edit');
+            Route::post('remove','remove');
         });
     });
     Route::controller(OrderController::class)->group(function() {

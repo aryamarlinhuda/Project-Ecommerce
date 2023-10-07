@@ -75,48 +75,15 @@ class ProductController extends Controller
             $data->category = null;
         }
 
-        $data->price = 'Rp ' . number_format($data->budget, 2, ',', '.');
-
-        $reviews = Review::where('product_id',$data->id)->first();
-        if(!$reviews) {
-            $data->rating = null;
+        if($data->price) {
+            $data->price = 'Rp ' . number_format($data->price, 2, ',', '.');
         } else {
-            $average_rating = Review::where('product_id',$data->id)->average('rating');
-            $getRating = substr($average_rating, 0, 3);
-            $formattedRating = str_replace('.', ',', $getRating);
-            $data->rating = $formattedRating;
-        }
-
-        $data->ordered = Detail_Order::where('product_id',$data->id)->count();
-
-        $review = Review::where('product_id',$id)->get();
-        foreach($review as $x => $item) {
-            $review[$x]->username = $item->maker_name->name;
-
-            $updated_at = $item->updated_at;
-
-            if(now()->diffInSeconds($updated_at) === 0) {
-                $review[$x]->last_made = "now";
-            } else if(now()->diffInSeconds($updated_at) < 60) {
-                $review[$x]->last_made = now()->diffInSeconds($updated_at) . " seconds ago";
-            } else if(now()->diffInSeconds($updated_at) < 3600) {
-                $review[$x]->last_made = now()->diffInMinutes($updated_at) . " minutes ago";
-            } else if(now()->diffInSeconds($updated_at) < 86400) {
-                $review[$x]->last_made = now()->diffInHours($updated_at) . " hours ago";
-            } else if(now()->diffInSeconds($updated_at) < 172800) {
-                $review[$x]->last_made = "yesterday";
-            } else if(now()->diffInSeconds($updated_at) >= 172800) {
-                $dateTime = new DateTime($updated_at);
-                $formated_date = $dateTime->format('H:i d-M-Y');
-                $date = Carbon::createFromFormat('H:i d-M-Y', $formated_date);
-                $review[$x]->last_made = $date->format('H.i l, d F Y');
-            }
+            $data->price = 'Rp 0';
         }
 
         return response()->json([
             "status" => 200,
-            "data" => $data,
-            "review" => $review],
+            "data" => $data],
             200
         );
     }

@@ -20,7 +20,6 @@ class CartController extends Controller
 
             $carts[$x]->total_price = $cart->product->price * $cart->quantity;
         }
-        $carts->overall_price += $carts->total_price;
 
         return response()->json([
             "status" => 200,
@@ -42,14 +41,30 @@ class CartController extends Controller
                 "quantity.numeric" => "Quantity product must be a number!"
             ]);
 
+            $product = Product::find($request->input('product_id'));
+            if (!$product) {
+                return response()->json([
+                    "status" => 404,
+                    "message" => "Product Not Found!"],
+                    404
+                );
+            }
+
             $cart = Cart::where('product_id',$request->input('product_id'))->where('carted_by',$user)->first();
             if($cart) {
                 $cart->quantity = $cart->quantity + $request->input('quantity');
                 $cart->save();
+
+                return response()->json([
+                    "status" => 200,
+                    "message" => "Product has been successfully added to cart"],
+                    200
+                );
             } else {
                 Cart::create([
                     "product_id" => $request->input('product_id'),
-                    "quantity" => $request->input('quantity')
+                    "quantity" => $request->input('quantity'),
+                    "carted_by" => $user
                 ]);
 
                 return response()->json([
@@ -89,21 +104,28 @@ class CartController extends Controller
                 );
             }
 
-            if($request->input('quantity') === 0) {
+            if($request->input('quantity') == 0) {
                 $cart->delete();
+                return response()->json([
+                    "status" => 200,
+                    "message" => "Cart Deleted"],
+                    200
+                );
             } else {
                 Cart::where('id',$request->input('cart_id'))->update([
                     "quantity" => $request->input('quantity')
                 ]);
             }
-            
-            $product = Product::where('id',$cart->product_id)->first();
-            $cart->price = $product->price * $request->input('quantity');
+
+            $carts = Cart::find($request->input('cart_id'));
+            $product = Product::where('id',$carts->product_id)->first();
+            $carts->product = $product;
+            $carts->price = $product->price * $request->input('quantity');
 
             return response()->json([
                 "status" => 200,
                 "message" => "Cart has been successfully edited",
-                "data" => $cart
+                "data" => $carts
                 ], 200);
 
         } catch (ValidationException $e) {
@@ -119,28 +141,26 @@ class CartController extends Controller
 
         try {
             $request->validate([
-                "product_id" => "required",
+                "cart_id" => "required",
             ],[
-                "product_id.required" => "Product ID is required!",
+                "cart_id.required" => "Product ID is required!",
             ]);
 
-            $cart = Cart::where('product_id',$request->input('product_id'))->where('carted_by',$user)->first();
+            $cart = Cart::where('id',$request->input('cart_id'))->where('carted_by',$user)->first();
             if($cart) {
                 $cart->delete();
+                return response()->json([
+                    "status" => 200,
+                    "message" => "Cart has been successfully removed from cart"],
+                    200
+                );
             } else {
                 return response()->json([
                     "status" => 404,
-                    "message" => "Product not found"],
+                    "message" => "Cart not found"],
                     404
                 );
             }
-
-            return response()->json([
-                "status" => 200,
-                "message" => "Product has been successfully removed from cart"],
-                200
-            );
-
         } catch (ValidationException $e) {
             return response()->json([
                 "status" => 400,
